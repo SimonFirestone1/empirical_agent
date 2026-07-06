@@ -1,0 +1,8 @@
+scratch/
+data/raw/
+data/external/
+data/processed/
+outputs/
+.env
+__pycache__/
+*.pyc

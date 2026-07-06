@@ -1,0 +1,206 @@
+{
+  "benchmark_id": "wallace_real_options_ahs_v1",
+  "benchmark_name": "Wallace AHS Real Options Housing Investment Benchmark",
+  "total_score": 0.9458636363636364,
+  "component_scores": {
+    "required_files": {
+      "score": 1.0,
+      "found": [
+        "replication_plan.md",
+        "variable_crosswalk.csv",
+        "sample_construction_log.csv",
+        "analysis_code.py",
+        "regression_tables.csv",
+        "replication_memo.md",
+        "limitations.md"
+      ],
+      "missing": []
+    },
+    "variable_crosswalk": {
+      "score": 0.8195454545454546,
+      "column_score": {
+        "score": 1.0,
+        "matched_columns": [
+          "economic_rationale",
+          "final_variable",
+          "implementation_notes",
+          "source_variable",
+          "transformation",
+          "wave"
+        ],
+        "missing_columns": []
+      },
+      "expected_values_score": {
+        "score": 1.0,
+        "observed": [
+          "1985",
+          "1987",
+          "1989",
+          "1991",
+          "1993",
+          "1995",
+          "1997"
+        ],
+        "missing": [],
+        "extra": []
+      },
+      "variable_coverage_score": 0.7272727272727273,
+      "mapping_quality_score": 0.7181818181818183,
+      "variable_details": {
+        "renovation_indicator": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "house_value": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "household_income": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "property_tax": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "structure_age": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "geography": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "recent_mover": {
+          "coverage": 0.0,
+          "source_match": null,
+          "transformation_match": null,
+          "score": 0.0
+        },
+        "listed_for_sale": {
+          "coverage": 0.0,
+          "source_match": null,
+          "transformation_match": null,
+          "score": 0.0
+        },
+        "maintenance": {
+          "coverage": 0.0,
+          "source_match": null,
+          "transformation_match": null,
+          "score": 0.0
+        },
+        "uncertainty_proxy": {
+          "coverage": 1.0,
+          "source_match": true,
+          "transformation_match": true,
+          "score": 1.0
+        },
+        "option_value_proxy": {
+          "coverage": 1.0,
+          "source_match": null,
+          "transformation_match": true,
+          "score": 0.9
+        }
+      }
+    },
+    "sample_construction_log": {
+      "score": 1.0,
+      "column_score": {
+        "score": 1.0,
+        "matched_columns": [
+          "description",
+          "rows_after",
+          "rows_before",
+          "rows_dropped",
+          "step",
+          "wave"
+        ],
+        "missing_columns": []
+      },
+      "expected_values_score": {
+        "score": 1.0,
+        "observed": [
+          "1985",
+          "1987",
+          "1989",
+          "1991",
+          "1993",
+          "1995",
+          "1997"
+        ],
+        "missing": [],
+        "extra": []
+      },
+      "row_score": 1.0
+    },
+    "regression_tables": {
+      "score": 1.0,
+      "column_score": {
+        "score": 1.0,
+        "matched_columns": [
+          "coefficient",
+          "model",
+          "std_error",
+          "variable"
+        ],
+        "missing_columns": []
+      },
+      "expected_values_score": {
+        "score": 1.0
+      },
+      "row_score": 1.0
+    },
+    "replication_plan": {
+      "score": 1.0,
+      "matched_terms": [
+        "American Housing Survey",
+        "real options",
+        "renovation",
+        "sample",
+        "variable"
+      ],
+      "missing_terms": [],
+      "matched_regex": [],
+      "missing_regex": []
+    },
+    "replication_memo": {
+      "score": 1.0,
+      "matched_terms": [
+        "AHS",
+        "renovation",
+        "real options",
+        "uncertainty",
+        "limitations",
+        "approximation"
+      ],
+      "missing_terms": [],
+      "matched_regex": [],
+      "missing_regex": []
+    },
+    "limitations": {
+      "score": 1.0,
+      "matched_terms": [
+        "missing",
+        "ambiguity",
+        "approximation",
+        "variable",
+        "replication"
+      ],
+      "missing_terms": [],
+      "matched_regex": [],
+      "missing_regex": []
+    }
+  }
+}

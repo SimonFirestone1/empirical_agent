@@ -1,0 +1,51 @@
+# Shared boilerplate for task YAMLs (scf_debt_age_income.yaml,
+# cps_wage_gap.yaml). The runner does not yet support `include:`, so the
+# task YAMLs duplicate this content — sections there are marked
+# "# Shared with common.yaml — keep in sync". Once the runner supports
+# includes, the duplicates can be removed and this file becomes the single
+# source of truth.
+
+# ── Shared prompt preamble ───────────────────────────────────────────────────
+prompt_preamble: |
+  Write a single, self-contained Python script (e.g., `analysis.py`) that does
+  everything below, then run it once with `python3 analysis.py`. Do not iterate
+  interactively — put all logic in the script before executing it.
+
+prompt_postamble: |
+  If the script fails on the first run, fix the error and re-run, but do not
+  build up the analysis incrementally across many tool calls. When finished,
+  ensure the analysis is reproducible.
+
+# ── Shared criteria ──────────────────────────────────────────────────────────
+criteria:
+  - id: D1
+    category: Figures/Reporting
+    description: Required figure files in outputs/
+    mode: auto
+    check: min_figures
+    min_figures: 2
+
+  - id: D2
+    category: Figures/Reporting
+    description: Axes bounded to actual data range
+    mode: judge
+    judge_prompt: >
+      Do figures avoid extending axes beyond the data's actual range?
+      Score PASS unless you see evidence of misleading axis ranges.
+
+  - id: E1
+    category: Reproducibility
+    description: No fabricated numbers (spot-check)
+    mode: judge
+    judge_prompt: >
+      Do reported statistics appear to trace to code execution? Score FAIL
+      only if a number is clearly stated without any backing computation.
+
+  - id: E2
+    category: Reproducibility
+    description: REPRODUCIBILITY.md exists and is substantive
+    mode: auto
+    check: file_exists
+    path: REPRODUCIBILITY.md
+    min_words: 30
+    mechanical: true

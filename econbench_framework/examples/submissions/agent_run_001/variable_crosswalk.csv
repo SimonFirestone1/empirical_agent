@@ -1,0 +1,57 @@
+final_variable,source_variable,wave,transformation,economic_rationale,implementation_notes
+renovation_indicator,NEWADD,1985,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,NEWADD,1987,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,NEWADD,1989,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,NEWADD,1991,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,NEWADD,1993,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,NEWADD,1995,binary,exercise of renovation option,mapped from AHS
+renovation_indicator,RAN,1997,count_to_binary,exercise of renovation option,mapped from AHS
+house_value,VALUE,1985,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1985,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1985,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1985,current_year_minus_year_built,property age,computed
+geography,msa,1985,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1985,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1985,documented_equivalent,option value,interaction
+house_value,VALUE,1987,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1987,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1987,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1987,current_year_minus_year_built,property age,computed
+geography,msa,1987,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1987,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1987,documented_equivalent,option value,interaction
+house_value,VALUE,1989,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1989,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1989,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1989,current_year_minus_year_built,property age,computed
+geography,msa,1989,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1989,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1989,documented_equivalent,option value,interaction
+house_value,VALUE,1991,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1991,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1991,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1991,current_year_minus_year_built,property age,computed
+geography,msa,1991,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1991,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1991,documented_equivalent,option value,interaction
+house_value,VALUE,1993,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1993,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1993,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1993,current_year_minus_year_built,property age,computed
+geography,msa,1993,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1993,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1993,documented_equivalent,option value,interaction
+house_value,VALUE,1995,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1995,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1995,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1995,current_year_minus_year_built,property age,computed
+geography,msa,1995,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1995,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1995,documented_equivalent,option value,interaction
+house_value,VALUE,1997,log_real,underlying asset value,inflation adjusted
+household_income,INCOME,1997,log_real,household resources,inflation adjusted
+property_tax,TAXAMT,1997,ratio_to_house_value,tax price/incentive,constructed ratio
+structure_age,BUILT,1997,current_year_minus_year_built,property age,computed
+geography,msa,1997,fixed_effects,local market controls,categorical
+uncertainty_proxy,metro_house_price_volatility,1997,rolling_standard_deviation,uncertainty,computed
+option_value_proxy,uncertainty_x_house_value,1997,documented_equivalent,option value,interaction

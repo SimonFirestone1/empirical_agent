@@ -1,0 +1,38 @@
+Provisioning 7 data item(s) into benchmarks/wallace/data
+[ahs_1985_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1985/AHS%201985%20National%20PUF%20v2.0%20CSV.zip
+  1 / 14 MB  2 / 14 MB  3 / 14 MB  4 / 14 MB  5 / 14 MB  6 / 14 MB  7 / 14 MB  8 / 14 MB  9 / 14 MB  10 / 14 MB  12 / 14 MB  13 / 14 MB  14 / 14 MB  14 / 14 MB
+  extracting to benchmarks/wallace/data/ahs_1985_national
+  provisioned
+[ahs_1987_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1987/AHS%201987%20National%20PUF%20v2.0%20CSV.zip
+  1 / 12 MB  2 / 12 MB  3 / 12 MB  4 / 12 MB  5 / 12 MB  6 / 12 MB  7 / 12 MB  8 / 12 MB  9 / 12 MB  10 / 12 MB  12 / 12 MB  12 / 12 MB
+  extracting to benchmarks/wallace/data/ahs_1987_national
+  provisioned
+[ahs_1989_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1989/AHS%201989%20National%20PUF%20v2.0%20CSV.zip
+  1 / 14 MB  2 / 14 MB  3 / 14 MB  4 / 14 MB  5 / 14 MB  6 / 14 MB  7 / 14 MB  8 / 14 MB  9 / 14 MB  10 / 14 MB  12 / 14 MB  13 / 14 MB  14 / 14 MB  14 / 14 MB
+  extracting to benchmarks/wallace/data/ahs_1989_national
+  provisioned
+[ahs_1991_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1991/AHS%201991%20National%20PUF%20v2.0%20CSV.zip
+  1 / 14 MB  2 / 14 MB  3 / 14 MB  4 / 14 MB  5 / 14 MB  6 / 14 MB  7 / 14 MB  8 / 14 MB  9 / 14 MB  10 / 14 MB  12 / 14 MB  13 / 14 MB  14 / 14 MB  14 / 14 MB
+  extracting to benchmarks/wallace/data/ahs_1991_national
+  provisioned
+[ahs_1993_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1993/AHS%201993%20National%20PUF%20v2.0%20CSV.zip
+  1 / 15 MB  2 / 15 MB  3 / 15 MB  4 / 15 MB  5 / 15 MB  6 / 15 MB  7 / 15 MB  8 / 15 MB  9 / 15 MB  10 / 15 MB  12 / 15 MB  13 / 15 MB  14 / 15 MB  15 / 15 MB  15 / 15 MB
+  extracting to benchmarks/wallace/data/ahs_1993_national
+  provisioned
+[ahs_1995_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1995/AHS%201995%20National%20PUF%20v2.1%20CSV.zip
+  1 / 16 MB  2 / 16 MB  3 / 16 MB  4 / 16 MB  5 / 16 MB  6 / 16 MB  7 / 16 MB  8 / 16 MB  9 / 16 MB  10 / 16 MB  12 / 16 MB  13 / 16 MB  14 / 16 MB  15 / 16 MB  16 / 16 MB  16 / 16 MB
+  extracting to benchmarks/wallace/data/ahs_1995_national
+  provisioned
+[ahs_1997_national]
+  downloading https://www2.census.gov/programs-surveys/ahs/1997/AHS%201997%20National%20PUF%20v2.0%20CSV.zip
+  1 / 14 MB  2 / 14 MB  3 / 14 MB  4 / 14 MB  5 / 14 MB  6 / 14 MB  7 / 14 MB  8 / 14 MB  9 / 14 MB  10 / 14 MB  12 / 14 MB  13 / 14 MB  14 / 14 MB  14 / 14 MB
+  extracting to benchmarks/wallace/data/ahs_1997_national
+  provisioned
+
+All data ready under benchmarks/wallace/data

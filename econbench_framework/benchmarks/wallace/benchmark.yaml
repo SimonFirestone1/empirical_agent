@@ -1,0 +1,263 @@
+benchmark_id: wallace_real_options_ahs_v1
+benchmark_name: Wallace AHS Real Options Housing Investment Benchmark
+prompt_file: prompt.md
+data:
+  directory: data
+  items:
+    ahs_1985_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1985/AHS%201985%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+    ahs_1987_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1987/AHS%201987%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+    ahs_1989_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1989/AHS%201989%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+    ahs_1991_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1991/AHS%201991%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+    ahs_1993_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1993/AHS%201993%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+    ahs_1995_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1995/AHS%201995%20National%20PUF%20v2.1%20CSV.zip
+      extract: true
+    ahs_1997_national:
+      url: https://www2.census.gov/programs-surveys/ahs/1997/AHS%201997%20National%20PUF%20v2.0%20CSV.zip
+      extract: true
+required_outputs:
+- replication_plan.md
+- variable_crosswalk.csv
+- sample_construction_log.csv
+- analysis_code.py
+- regression_tables.csv
+- replication_memo.md
+- limitations.md
+crosswalk_file:
+  filename: variable_crosswalk.csv
+  required_columns:
+  - final_variable
+  - source_variable
+  - wave
+  - transformation
+  - economic_rationale
+  - implementation_notes
+  final_variable_column: final_variable
+  source_variable_column: source_variable
+  transformation_column: transformation
+  expected_values:
+    column: wave
+    values:
+    - 1985
+    - 1987
+    - 1989
+    - 1991
+    - 1993
+    - 1995
+    - 1997
+  score_weights:
+    columns: 0.2
+    expected_values: 0.15
+    variable_coverage: 0.3
+    mapping_quality: 0.35
+variable_mappings:
+  renovation_indicator:
+    description: Indicator that a substantial renovation, addition, or replacement
+      occurred since the prior survey.
+    acceptable_sources:
+      1985:
+      - NEWADD
+      1987:
+      - NEWADD
+      1989:
+      - NEWADD
+      1991:
+      - NEWADD
+      1993:
+      - NEWADD
+      1995:
+      - NEWADD
+      1997:
+      - RAN
+    acceptable_transformations:
+    - binary
+    - count_to_binary
+    - documented_equivalent
+  house_value:
+    acceptable_sources:
+    - VALUE
+    acceptable_transformations:
+    - raw
+    - inflation_adjusted
+    - log
+    - log_real
+  household_income:
+    acceptable_sources:
+    - household_income
+    - total_income
+    - INCOME
+    acceptable_transformations:
+    - raw
+    - inflation_adjusted
+    - log
+    - log_real
+  property_tax:
+    acceptable_sources:
+    - property_tax
+    - TAXAMT
+    acceptable_transformations:
+    - raw
+    - inflation_adjusted
+    - ratio_to_house_value
+  structure_age:
+    acceptable_sources:
+    - year_built
+    - structure_age
+    - BUILT
+    acceptable_transformations:
+    - current_year_minus_year_built
+    - categorical_bins
+    - spline
+  geography:
+    acceptable_sources:
+    - msa
+    - cmsa
+    - metropolitan_area
+    - census_region
+    acceptable_transformations:
+    - fixed_effects
+    - dummy_variables
+    - regional_categories
+  recent_mover:
+    acceptable_sources:
+    - recent_move_indicator
+    - mover
+    acceptable_transformations:
+    - binary
+  listed_for_sale:
+    acceptable_sources:
+    - listed_for_sale
+    - forsale
+    acceptable_transformations:
+    - binary
+  maintenance:
+    acceptable_sources:
+    - maintenance_expenditures
+    - repair_expenditures
+    acceptable_transformations:
+    - raw
+    - log
+    - inflation_adjusted
+  uncertainty_proxy:
+    description: Proxy should reflect uncertainty relevant to housing investment timing.
+    acceptable_sources:
+    - local_house_price_volatility
+    - metro_house_price_volatility
+    - cross-sectional_house_value_dispersion
+    - repeat_sales_index_volatility
+    - externally_merged_house_price_index
+    acceptable_transformations:
+    - rolling_standard_deviation
+    - coefficient_of_variation
+    - variance
+    - documented_equivalent
+  option_value_proxy:
+    description: Need not exactly reproduce the original paper but must be theoretically
+      justified.
+    acceptable_construction:
+    - uncertainty_measure
+    - uncertainty_x_house_value
+    - uncertainty_x_income
+    - theoretical_proxy
+    - documented_equivalent
+tabular_artifacts:
+  sample_construction_log:
+    filename: sample_construction_log.csv
+    required_columns:
+    - step
+    - description
+    - wave
+    - rows_before
+    - rows_after
+    - rows_dropped
+    expected_values:
+      column: wave
+      values:
+      - 1985
+      - 1987
+      - 1989
+      - 1991
+      - 1993
+      - 1995
+      - 1997
+    minimum_rows: 7
+  regression_tables:
+    filename: regression_tables.csv
+    required_columns:
+    - model
+    - variable
+    - coefficient
+    - std_error
+    minimum_rows: 5
+    score_weights:
+      columns: 0.7
+      minimum_rows: 0.3
+text_artifacts:
+  replication_plan:
+    filename: replication_plan.md
+    required_terms:
+    - American Housing Survey
+    - real options
+    - renovation
+    - sample
+    - variable
+  replication_memo:
+    filename: replication_memo.md
+    required_terms:
+    - AHS
+    - renovation
+    - real options
+    - uncertainty
+    - limitations
+    - approximation
+  limitations:
+    filename: limitations.md
+    required_terms:
+    - missing
+    - ambiguity
+    - approximation
+    - variable
+    - replication
+tolerances:
+  variable_mapping:
+    exact_source_match:
+      score: 1.0
+    acceptable_alternative_source:
+      score: 0.9
+    theoretically_equivalent_construction:
+      score: 0.8
+    documented_approximation:
+      score: 0.65
+    undocumented_substitution:
+      score: 0.3
+    fabricated_variable:
+      score: 0.0
+  transformation:
+    exact:
+      score: 1.0
+    accepted_alternative:
+      score: 0.9
+    reasonable_but_not_preferred:
+      score: 0.75
+    undocumented:
+      score: 0.4
+    inconsistent_with_theory:
+      score: 0.0
+scoring_weights:
+  required_files: 0.1
+  variable_crosswalk: 0.3
+  sample_construction_log: 0.2
+  regression_tables: 0.15
+  replication_plan: 0.05
+  replication_memo: 0.1
+  limitations: 0.1

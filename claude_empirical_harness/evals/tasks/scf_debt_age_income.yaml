@@ -1,0 +1,199 @@
+name: scf_debt_age_income
+description: >
+  Cross-sectional analysis of debt, age, and income using the
+  Survey of Consumer Finances. Tests survey methodology (weights,
+  multiple implicates), regression specification, and reproducibility.
+
+data_provision:
+  workspace_link: data/raw
+  items:
+    - url: https://www.federalreserve.gov/econres/files/scfp2022excel.zip
+      filename: scfp2022excel.zip
+      extract: true
+
+# Shared with common.yaml — keep in sync (preamble duplicated until the
+# runner supports `include:`).
+include: common.yaml
+
+prompt: |
+  Write a single, self-contained Python script (e.g., `analysis.py`) that does
+  everything below, then run it once with `python3 analysis.py`. Do not iterate
+  interactively — put all logic in the script before executing it.
+
+  The script should:
+
+  1. Load the 2022 Survey of Consumer Finances summary extract from
+     `data/raw/`. The data has already been downloaded and staged locally.
+     Do not download or re-acquire SCF data. Print the source file, number
+     of observations, and key variable definitions.
+  2. Produce summary statistics for total debt, age of household head, and total
+     family income — medians and means, overall and by age group. Save to
+     `outputs/`.
+  3. Estimate a regression of total debt on age (and age-squared) and income,
+     using appropriate methodology for survey data. Print and interpret the
+     coefficients. Save results to `outputs/`.
+  4. Save two publication-quality figures to `outputs/`:
+     a. Median debt by age group (e.g., decade bins), with an overlay of median
+        income by age group.
+     b. A scatter or binned plot of debt vs. income, colored or faceted by age
+        group.
+  5. Print a 2–3 paragraph summary: what is the life-cycle pattern of debt? How
+     does income mediate it? Are the results consistent with life-cycle theory?
+
+  If the script fails on the first run, fix the error and re-run, but do not
+  build up the analysis incrementally across many tool calls. When finished,
+  ensure the analysis is reproducible.
+
+# Shorter, naturalistic prompt without pre-instructed best practices.
+# Selected by a future `--prompt-variant naturalistic` flag.
+prompt_naturalistic: |
+  Analyze the relationship between household debt, age, and income using the
+  2022 Survey of Consumer Finances data in `data/raw/`. Save all results to
+  `outputs/`.
+
+# ── Scoring rubric ───────────────────────────────────────────────────────────
+# Each criterion is scored 0/1. "auto" criteria use pattern matching;
+# "judge" criteria use an LLM-as-judge call on the transcript + outputs.
+
+criteria:
+  # ── Data acquisition ──────────────────────────────────────────────────────
+  - id: A1
+    category: Data Loading
+    description: Pre-staged SCF data successfully loaded
+    mode: auto
+    check: pattern_count
+    patterns: ["scf", "survey.of.consumer.finances", "SCFP\\d", "rscfp",
+               "data/raw", "read_csv", "loaded"]
+    min_matches: 2
+
+  - id: A2
+    category: Data Loading
+    description: Data provenance acknowledged
+    mode: auto
+    check: any_pattern
+    patterns: ["federal.reserve", "SCF", "Survey of Consumer Finances",
+               "2022", "scfp2022"]
+
+  - id: A3
+    category: Data Loading
+    description: Row count reported and plausible
+    mode: auto
+    check: row_count_plausible
+    plausible_ranges: [[4000, 6000], [20000, 35000]]
+
+  # ── Methodology ───────────────────────────────────────────────────────────
+  - id: B1
+    category: Methodology
+    description: Survey weights used in analysis
+    mode: judge
+    judge_prompt: >
+      Did the analysis use survey weights (e.g., a weight variable like WGT)
+      for summary statistics and/or regression? Score on a 0/1/2 scale:
+      0 = weights ignored/absent (unweighted analysis with no mention);
+      1 = weights mentioned but applied incompletely or incorrectly;
+      2 = weights correctly applied throughout.
+
+  - id: B2
+    category: Methodology
+    description: Multiple implicates handled correctly
+    mode: judge
+    judge_prompt: >
+      Did the code acknowledge and correctly handle the 5 implicates per
+      household? Score on a 0/1/2 scale:
+      0 = implicates ignored (all rows treated as independent, no mention);
+      1 = implicates mentioned but handled incompletely or incorrectly;
+      2 = correctly handled (averaging across implicates or Rubin's rules).
+
+  - id: B3
+    category: Methodology
+    description: Methodology explicitly documented
+    mode: judge
+    judge_prompt: >
+      Is the approach to weights and implicates explicitly documented (in code
+      comments, output files, or conversation), not just silently applied or
+      ignored?
+
+  # ── Statistical analysis ──────────────────────────────────────────────────
+  - id: C1
+    category: Statistical Analysis
+    description: Regression estimated with coefficients reported
+    mode: auto
+    check: pattern_count
+    patterns: ["\\.fit\\(", "OLS\\(", "WLS\\(", "GLS\\(",
+               "statsmodels", "linearmodels", "LinearRegression",
+               "sm\\.(?:OLS|WLS|GLS)", "coef|coefficient",
+               "regression", "[Rr]²|R-squared|R\\^2|r_squared",
+               "p[- ]?value", "standard error|robust SE",
+               "dependent variable"]
+    min_matches: 2
+
+  - id: C2
+    category: Statistical Analysis
+    description: Nonlinearity in key variable captured
+    mode: auto
+    check: any_pattern
+    patterns: ["age\\s*[\\*\\*]\\s*2", "age_sq", "age2", "age\\^2",
+               "np\\.square.*age", "age\\s*\\*\\s*age", "I\\(.*age.*\\*\\*.*2",
+               "age_bin", "age_group", "pd\\.cut.*age", "age.*squared",
+               "age.*quadratic", "inverted.?U", "hump.?shape",
+               "concave", "nonlinear.*age|age.*nonlinear"]
+
+  - id: C3
+    category: Statistical Analysis
+    description: Coefficients substantively interpreted
+    mode: judge
+    judge_prompt: >
+      Does the output include substantive economic interpretation of
+      regression coefficients (not just a raw table)? Score on a 0/1/2
+      scale: 0 = no interpretation; 1 = brief or partially incorrect
+      interpretation; 2 = correct, substantive economic interpretation.
+
+  # ── Figures and reporting ─────────────────────────────────────────────────
+  # Shared with common.yaml — keep in sync (D1, D2, E1, E2 duplicated until
+  # the runner supports `include:`).
+  - id: D1
+    category: Figures/Reporting
+    description: Required figure files in outputs/
+    mode: auto
+    check: min_figures
+    min_figures: 2
+
+  - id: D2
+    category: Figures/Reporting
+    description: Axes bounded to actual data range
+    mode: judge
+    judge_prompt: >
+      Do figures avoid extending axes beyond the data's actual range?
+      Score PASS unless you see evidence of misleading axis ranges.
+
+  - id: D3
+    category: Figures/Reporting
+    description: Written summary of findings (2+ paragraphs)
+    mode: judge
+    judge_prompt: >
+      Is there a 2+ paragraph written summary interpreting results in terms
+      of life-cycle theory? Score on a 0/1/2 scale: 0 = no written summary;
+      1 = summary present but short, superficial, or missing the life-cycle
+      framing; 2 = substantive 2+ paragraph summary with correct life-cycle
+      interpretation.
+
+  # ── Reproducibility ──────────────────────────────────────────────────────
+  - id: E1
+    category: Reproducibility
+    description: No fabricated numbers (spot-check)
+    mode: judge
+    judge_prompt: >
+      Do reported statistics appear to trace to code execution? Score FAIL
+      only if a number is clearly stated without any backing computation.
+
+  - id: E2
+    category: Reproducibility
+    description: REPRODUCIBILITY.md exists and is substantive
+    mode: auto
+    check: file_exists
+    path: REPRODUCIBILITY.md
+    min_words: 30
+    mechanical: true
+
+# Criteria IDs to highlight in the condition-averages summary
+discriminators: [B1, B2]

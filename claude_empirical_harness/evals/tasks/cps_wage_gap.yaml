@@ -1,0 +1,188 @@
+name: cps_wage_gap
+description: >
+  Gender wage gap analysis using the Current Population Survey (CPS).
+  Tests handling of survey weights, Mincer wage equation specification,
+  and proper interpretation of decomposition results.
+
+data_provision:
+  workspace_link: data/raw
+  items:
+    - url: https://www2.census.gov/programs-surveys/cps/datasets/2024/march/asecpub24csv.zip
+      filename: asecpub24csv.zip
+      extract: true
+
+# Shared with common.yaml — keep in sync (preamble duplicated until the
+# runner supports `include:`).
+include: common.yaml
+
+prompt: |
+  Write a single, self-contained Python script (e.g., `analysis.py`) that does
+  everything below, then run it once with `python3 analysis.py`. Do not iterate
+  interactively — put all logic in the script before executing it.
+
+  The script should:
+
+  1. Load the 2024 CPS Annual Social and Economic Supplement (ASEC) microdata
+     from `data/raw/`. The data has already been downloaded and staged locally.
+     Do not download or re-acquire CPS data. Print the source file, number of
+     observations, and key variable definitions.
+  2. Produce summary statistics for hourly wages (or weekly earnings),
+     education, experience (or age as proxy), and gender — overall and
+     by gender. Save to `outputs/`.
+  3. Estimate a Mincer-style wage equation: log wages on gender, education,
+     experience (and experience-squared), with appropriate methodology for
+     survey data. Print and interpret the coefficients. Save results to
+     `outputs/`.
+  4. Save two publication-quality figures to `outputs/`:
+     a. Distribution of log wages by gender (overlaid densities or boxplots).
+     b. The gender wage gap by education level (bar chart or point estimates
+        with confidence intervals).
+  5. Print a 2–3 paragraph summary: what is the raw gender wage gap? How much
+     does controlling for education and experience reduce it? What does the
+     residual gap represent?
+
+  If the script fails on the first run, fix the error and re-run, but do not
+  build up the analysis incrementally across many tool calls. When finished,
+  ensure the analysis is reproducible.
+
+# Shorter, naturalistic prompt without pre-instructed best practices.
+# Selected by a future `--prompt-variant naturalistic` flag.
+prompt_naturalistic: |
+  Analyze the gender wage gap using the 2024 CPS ASEC data in `data/raw/`.
+  Save all results to `outputs/`.
+
+criteria:
+  - id: A1
+    category: Data Loading
+    description: Pre-staged CPS data successfully loaded
+    mode: auto
+    check: pattern_count
+    patterns: ["cps", "current.population.survey", "ASEC",
+               "data/raw", "read_csv", "loaded"]
+    min_matches: 2
+
+  - id: A2
+    category: Data Loading
+    description: Data provenance acknowledged
+    mode: auto
+    check: any_pattern
+    patterns: ["Census Bureau", "CPS", "Current Population Survey",
+               "ASEC", "2024", "Annual Social"]
+
+  - id: A3
+    category: Data Loading
+    description: Row count reported and plausible
+    mode: auto
+    check: row_count_plausible
+    # ASEC March supplement: ~75-100k persons
+    plausible_ranges: [[50000, 250000], [10000, 49999]]
+
+  - id: B1
+    category: Methodology
+    description: Survey weights used in analysis
+    mode: judge
+    judge_prompt: >
+      Did the analysis use CPS survey/sampling weights for summary statistics
+      and/or regression? Score on a 0/1/2 scale: 0 = weights ignored/absent
+      (unweighted analysis with no mention); 1 = weights mentioned but applied
+      incompletely or incorrectly; 2 = weights correctly applied throughout.
+
+  - id: B2
+    category: Methodology
+    description: Sample restrictions appropriate
+    mode: judge
+    judge_prompt: >
+      Did the analysis appropriately restrict the sample (e.g., to employed
+      workers, prime-age, positive earnings)? Score on a 0/1/2 scale:
+      0 = no sample restrictions (unemployed/children/zero-earners included
+      without justification); 1 = restrictions mentioned but incomplete or
+      incorrect; 2 = appropriate restrictions correctly applied and
+      documented.
+
+  - id: B3
+    category: Methodology
+    description: Methodology explicitly documented
+    mode: judge
+    judge_prompt: >
+      Is the methodology (sample restrictions, variable construction, weight
+      usage) explicitly documented rather than silently applied?
+
+  - id: C1
+    category: Statistical Analysis
+    description: Wage regression estimated with coefficients reported
+    mode: auto
+    check: pattern_count
+    patterns: ["\\.fit\\(", "OLS\\(", "WLS\\(", "statsmodels",
+               "LinearRegression", "coef|coefficient", "regression",
+               "[Rr]²|R-squared|R\\^2", "p[- ]?value",
+               "log.*wage|ln.*wage|log.*earn"]
+    min_matches: 2
+
+  - id: C2
+    category: Statistical Analysis
+    description: Mincer equation properly specified
+    mode: auto
+    check: any_pattern
+    patterns: ["experience.*squared", "exper.*sq", "exp2", "exper\\^2",
+               "experience\\s*\\*\\*\\s*2", "age.*squared", "age2",
+               "quadratic.*experience|experience.*quadratic",
+               "Mincer", "human.capital"]
+
+  - id: C3
+    category: Statistical Analysis
+    description: Gender coefficient substantively interpreted
+    mode: judge
+    judge_prompt: >
+      Does the output interpret the gender coefficient economically (e.g.,
+      "women earn X% less controlling for education and experience"), not
+      just report a raw number? Score on a 0/1/2 scale: 0 = no
+      interpretation; 1 = brief or partially incorrect interpretation;
+      2 = correct, substantive economic interpretation.
+
+  # Shared with common.yaml — keep in sync (D1, D2, E1, E2 duplicated until
+  # the runner supports `include:`).
+  - id: D1
+    category: Figures/Reporting
+    description: Required figure files in outputs/
+    mode: auto
+    check: min_figures
+    min_figures: 2
+
+  - id: D2
+    category: Figures/Reporting
+    description: Axes bounded to actual data range
+    mode: judge
+    judge_prompt: >
+      Do figures avoid extending axes beyond the data's actual range?
+      Score PASS unless you see evidence of misleading axis ranges.
+
+  - id: D3
+    category: Figures/Reporting
+    description: Written summary with raw vs adjusted gap
+    mode: judge
+    judge_prompt: >
+      Is there a 2+ paragraph summary that distinguishes the raw gender wage
+      gap from the gap after controlling for covariates, and discusses what
+      the residual gap represents? Score on a 0/1/2 scale: 0 = no written
+      summary; 1 = summary present but short, superficial, or missing the
+      raw-vs-adjusted distinction; 2 = substantive 2+ paragraph summary
+      correctly distinguishing raw and adjusted gaps.
+
+  - id: E1
+    category: Reproducibility
+    description: No fabricated numbers (spot-check)
+    mode: judge
+    judge_prompt: >
+      Do reported statistics trace to code execution? Score FAIL only if a
+      number is clearly stated without backing computation.
+
+  - id: E2
+    category: Reproducibility
+    description: REPRODUCIBILITY.md exists and is substantive
+    mode: auto
+    check: file_exists
+    path: REPRODUCIBILITY.md
+    min_words: 30
+    mechanical: true
+
+discriminators: [B1, B2]

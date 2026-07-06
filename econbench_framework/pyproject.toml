@@ -1,0 +1,9 @@
+[project]
+name = "econbench"
+version = "0.1.0"
+description = "YAML-driven empirical-analysis benchmark scorer"
+requires-python = ">=3.10"
+dependencies = ["pandas", "pyyaml"]
+
+[tool.setuptools.packages.find]
+include = ["econbench*"]

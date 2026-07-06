@@ -1,0 +1,29 @@
+step,description,wave,rows_before,rows_after,rows_dropped
+interview_status,Keep regular completed interviews (ISTATUS=1),1985,48830,43104,5726
+owner_occupied,Keep owner-occupied units (TENURE=1),1985,43104,27664,15440
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1985,27664,23154,4510
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1985,23154,22937,217
+interview_status,Keep regular completed interviews (ISTATUS=1),1987,49641,43436,6205
+owner_occupied,Keep owner-occupied units (TENURE=1),1987,43436,28857,14579
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1987,28857,24076,4781
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1987,24076,23920,156
+interview_status,Keep regular completed interviews (ISTATUS=1),1989,51823,45772,6051
+owner_occupied,Keep owner-occupied units (TENURE=1),1989,45772,29422,16350
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1989,29422,24435,4987
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1989,24435,24220,215
+interview_status,Keep regular completed interviews (ISTATUS=1),1991,51027,44764,6263
+owner_occupied,Keep owner-occupied units (TENURE=1),1991,44764,29608,15156
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1991,29608,24681,4927
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1991,24681,24426,255
+interview_status,Keep regular completed interviews (ISTATUS=1),1993,55981,49326,6655
+owner_occupied,Keep owner-occupied units (TENURE=1),1993,49326,31449,17877
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1993,31449,26123,5326
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1993,26123,25794,329
+interview_status,Keep regular completed interviews (ISTATUS=1),1995,51734,45675,6059
+owner_occupied,Keep owner-occupied units (TENURE=1),1995,45675,29384,16291
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1995,29384,24225,5159
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1995,24225,23745,480
+interview_status,Keep regular completed interviews (ISTATUS=1),1997,46010,39981,6029
+owner_occupied,Keep owner-occupied units (TENURE=1),1997,39981,26309,13672
+single_family_detached,Keep single-family detached homes (NUNIT2=1),1997,26309,21889,4420
+nonmissing_analysis_vars,"Drop missing/invalid value, income, tax, year built, region",1997,21889,20515,1374

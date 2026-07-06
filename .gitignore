@@ -1,0 +1,19 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Data & Evals Outputs
+claude_empirical_harness/evals/results/
+econbench_framework/reports/agent_run_*
+econbench_framework/benchmarks/*/data/
+.econbench_complete

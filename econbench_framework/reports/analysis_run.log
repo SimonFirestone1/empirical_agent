@@ -1,0 +1,15 @@
+1985: 22,937 obs (1.9s)
+1987: 23,920 obs (2.2s)
+1989: 24,220 obs (2.1s)
+1991: 24,426 obs (2.2s)
+1993: 25,794 obs (2.5s)
+1995: 23,745 obs (2.7s)
+1997: 20,515 obs (1.4s)
+{1985: 0.062, 1987: 0.055, 1989: 0.048, 1991: 0.046, 1993: 0.05, 1995: 0.629, 1997: 0.598}
+Pooled estimation sample: 159,410 obs, renovation rate 0.201
+m1_logit_baseline: n=159,410 (9.7s)
+m2_logit_geo_wave: n=159,410 (9.7s)
+m3_logit_uncertainty: n=159,410 (10.4s)
+m4_logit_option_value: n=159,410 (10.0s)
+m5_lpm_robustness: n=159,410 (5.6s)
+Done in 60.6s
