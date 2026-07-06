@@ -13,7 +13,7 @@ venv/
 .ipynb_checkpoints/
 
 # Data & Evals Outputs
-claude_empirical_harness/evals/results/
+claude-empirical-harness/evals/results/
 econbench_framework/reports/agent_run_*
 econbench_framework/benchmarks/*/data/
 .econbench_complete

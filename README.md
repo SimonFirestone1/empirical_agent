@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/Sandbox-Docker-2496ED.svg?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-**[Evaluation Harness](#-1-evaluation-harness-claude_empirical_harness)** • **[Scoring Engine](#-2-scoring-framework-econbench_framework)** • **[Architecture](#-architecture-workflow)** • **[Quick Start](#-quick-start)**
+**[Evaluation Harness](#-1-evaluation-harness-claude-empirical-harness)** • **[Scoring Engine](#-2-scoring-framework-econbench_framework)** • **[Architecture](#-architecture-workflow)** • **[Quick Start](#-quick-start)**
 
 </div>
 
@@ -18,7 +18,7 @@
 
 This suite combines two powerful tools designed to evaluate and verify agentic workflows in empirical research:
 
-1. **`claude_empirical_harness`**: A sandboxed runner that executes agentic trials under strict constraints (such as isolated environments and no-shortcut data rules) to see how skills improve data-science and model-building performance.
+1. **`claude-empirical-harness`**: A sandboxed runner that executes agentic trials under strict constraints (such as isolated environments and no-shortcut data rules) to see how skills improve data-science and model-building performance.
 2. **`econbench_framework`**: A YAML-driven scoring engine that grades agent replication outputs against verified econometric and panel data benchmarks.
 
 ---
@@ -38,7 +38,7 @@ graph TD
 
 ## 🚀 Projects Included
 
-### 📂 1. Evaluation Harness ([`claude_empirical_harness`](file:///Users/simonfirestone/empirical_agent/claude_empirical_harness))
+### 📂 1. Evaluation Harness ([`claude-empirical-harness`](file:///Users/simonfirestone/empirical_agent/claude-empirical-harness))
 Measures agent performance improvement under custom environment constraints. 
 * **Sandboxed Execution**: Spawns isolated environments using temporary directories and custom CLI wraps.
 * **Auto & LLM-as-Judge Evaluation**: Supports deterministic regex/file checks along with rich LLM evaluation rubrics.
@@ -62,7 +62,7 @@ A benchmark-agnostic framework for grading empirical-analysis agent submissions.
 To run a test trial and evaluate the agent's behavior:
 ```bash
 # Run a trial on the SCF debt task
-cd claude_empirical_harness
+cd claude-empirical-harness
 bash evals/run_eval.sh --task evals/tasks/scf_debt_age_income.yaml --runs 1 --condition both
 
 # Grade the trial using the LLM-as-judge
