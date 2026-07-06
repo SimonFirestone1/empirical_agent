@@ -1,0 +1,117 @@
+# Judge-only ground truth for the Wallace benchmark.
+#
+# Coefficients the scorer checks against regression_tables.csv.
+# Kept separate from benchmark.yaml so agents never see expected values.
+# Pass via: python -m econbench.scorer ... --ground-truth benchmarks/wallace/ground_truth.yaml
+#
+# Source: Downing & Wallace (2001), "A Real Options Approach to Housing
+# Investment." Standard logit results from Table 3; mixed logit results
+# from Table 4 (mean coefficients).
+#
+# IMPORTANT — exact coefficient matching is NOT expected. The paper builds
+# SPREAD (house return minus user cost of capital) from external MSA-level
+# house price indices and T-bill rates, and COST from proprietary Marshall
+# Swift construction-cost data (the benchmark provides a national PPI series
+# as a public proxy). Agents working from AHS data plus the provided FRED
+# T-bill, FHFA HPI, and PPI files will construct different proxy variables,
+# so their coefficients will differ in scale. The ground truth
+# therefore tests directional consistency (signs) and order-of-magnitude
+# plausibility via wide tolerances, with tighter checks reserved for the
+# household-level controls (RECMOVER, PER, INCOME, AGE) and the renovation
+# base rate (~3%), which ARE reproducible from AHS data alone.
+#
+# A coefficient passes if |observed - expected| <= max(atol, rtol * |expected|).
+
+coefficients:
+  # Standard logit (Table 3) — baseline model for scoring, since the
+  # benchmark asks agents to estimate logit models.
+  standard_logit:
+    constant:
+      expected: -3.76660806     # SE: 0.12761972
+      atol: 1.0
+      rtol: 0.5
+      weight: 0.0
+    recent_mover:               # RECMOVER
+      expected: -0.34383439     # SE: 0.14316822
+      atol: 0.25
+      rtol: 0.5
+      weight: 1.0
+    persons:                    # PER (persons in household)
+      expected: 0.18428747      # SE: 0.01648699
+      atol: 0.10
+      rtol: 0.5
+      weight: 1.0
+    household_income:           # INCOME (per $1,000)
+      expected: 0.00610994      # SE: 0.00060739
+      atol: 0.005
+      rtol: 0.5
+      weight: 1.0
+    age:                        # AGE of household head
+      expected: 0.00080446      # SE: 0.00152756 (not significant)
+      atol: 0.005
+      rtol: 1.0
+      weight: 1.0
+    spread:                     # SPREAD: house return - user cost (sign: +)
+      expected: 1.24788753      # SE: 0.21455544
+      atol: 1.0
+      rtol: 1.0
+      weight: 1.0
+    spread_vol:                 # SPREAD VOL: uncertainty proxy (sign: -)
+      expected: -0.89548072     # SE: 0.29654230
+      atol: 0.9
+      rtol: 1.0
+      weight: 1.0
+    cost:                       # COST: construction cost (proprietary source)
+      expected: -0.00192261     # SE: 0.00065567
+      atol: 0.005
+      rtol: 1.0
+      weight: 0.0
+    cost_vol:                   # COST VOL (not significant)
+      expected: 0.00089794      # SE: 0.00268588
+      atol: 0.01
+      rtol: 1.0
+      weight: 0.0
+
+  # Mixed logit (Table 4) — mean coefficients. Optional; only scored if the
+  # agent estimates a mixed/random-coefficients logit.
+  mixed_logit:
+    constant:
+      expected: -3.37422320     # SE: 0.14879496
+      atol: 1.0
+      rtol: 0.5
+      weight: 0.0
+    spread:
+      expected: 1.31059409      # SE: 0.23143197
+      atol: 1.0
+      rtol: 1.0
+      weight: 1.0
+    spread_vol:
+      expected: -1.80276532     # SE: 0.71684703
+      atol: 1.5
+      rtol: 1.0
+      weight: 1.0
+    cost:
+      expected: -0.00762312     # SE: 0.00106295
+      atol: 0.01
+      rtol: 1.0
+      weight: 0.0
+    cost_vol:
+      expected: -0.00405108     # SE: 0.00579420
+      atol: 0.01
+      rtol: 1.0
+      weight: 0.0
+
+# Directional checks: signs must match regardless of proxy construction.
+sign_checks:
+  standard_logit:
+    spread: positive          # option-value/return spread should raise renovation hazard
+    spread_vol: negative      # uncertainty delays irreversible investment (real options)
+    persons: positive
+    household_income: positive
+    recent_mover: negative
+
+# Sample-level target reproducible from AHS data alone.
+sample_statistics:
+  renovation_base_rate:
+    expected: 0.03            # ~3% of owner-occupier observations renovate per wave
+    atol: 0.02

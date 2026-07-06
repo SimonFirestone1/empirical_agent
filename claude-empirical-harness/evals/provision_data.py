@@ -108,10 +108,7 @@ def provision_item(
         if zipfile.is_zipfile(dest):
             print(f"  extracting {dest.name}")
             with zipfile.ZipFile(dest) as zf:
-                try:
-                    zf.extractall(data_dir, filter="data")
-                except TypeError:
-                    zf.extractall(data_dir)
+                zf.extractall(data_dir, filter="data")
         else:
             raise RuntimeError(f"extract: true but {dest.name} is not a valid zip file")
 

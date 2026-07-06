@@ -25,6 +25,18 @@ data:
     ahs_1997_national:
       url: https://www2.census.gov/programs-surveys/ahs/1997/AHS%201997%20National%20PUF%20v2.0%20CSV.zip
       extract: true
+    treasury_bill_3mo:
+      url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=TB3MS&cosd=1983-01-01&coed=1998-12-01&fq=Monthly&fam=avg&transformation=lin
+      extract: false
+      filename: treasury_bill_3mo.csv
+    fhfa_hpi_msa:
+      url: https://www.fhfa.gov/hpi/download/quarterly_datasets/hpi_at_metro.csv
+      extract: false
+      filename: fhfa_hpi_msa.csv
+    ppi_construction_costs:
+      url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=WPUSI012011&cosd=1983-01-01&coed=1998-12-01&fq=Monthly&fam=avg
+      extract: false
+      filename: ppi_construction_costs.csv
 required_outputs:
 - replication_plan.md
 - variable_crosswalk.csv

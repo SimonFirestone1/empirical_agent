@@ -29,7 +29,6 @@ DOCKER_BUILD=0
 DOCKER_IMAGE="claude-eval-harness"
 CONDITION_SPEC="claude_md,skill,hooks,agents"
 TRIAL_TIMEOUT=3600
-PARALLEL=1
 PROMPT_VARIANT="prompt"
 
 while [[ $# -gt 0 ]]; do
@@ -42,7 +41,6 @@ while [[ $# -gt 0 ]]; do
     --max-budget) MAX_BUDGET="$2"; shift 2 ;;
     --default-budget) DEFAULT_BUDGET="$2"; shift 2 ;;
     --trial-timeout) TRIAL_TIMEOUT="$2"; shift 2 ;;
-    --parallel) PARALLEL="$2"; shift 2 ;;
     --prompt-variant) PROMPT_VARIANT="$2"; shift 2 ;;
     --keep-workspaces) KEEP_WORKSPACES=1; shift ;;
     --docker) USE_DOCKER=1; shift ;;
@@ -107,8 +105,16 @@ print(task[field])
 RESULTS_DIR="$SCRIPT_DIR/results/$TASK_NAME"
 mkdir -p "$RESULTS_DIR"
 
-# Copy the task config into results for the scorer
+# Copy the task config (and rubric if separate) into results for the scorer
 cp "$TASK_FILE" "$RESULTS_DIR/_task.yaml"
+RUBRIC_FILE="$(python3 -c "
+import yaml, sys
+task = yaml.safe_load(open(sys.argv[1]))
+print(task.get('rubric', ''))
+" "$TASK_FILE")"
+if [[ -n "$RUBRIC_FILE" ]]; then
+  cp "$(dirname "$TASK_FILE")/$RUBRIC_FILE" "$RESULTS_DIR/$RUBRIC_FILE"
+fi
 
 # Apply the default budget when no explicit budget is given (--default-budget
 # overrides the default of 20).
@@ -162,7 +168,16 @@ fi
 
 # ── Workspace cleanup ────────────────────────────────────────────────────────
 WORKSPACES=()
-cleanup_workspaces() {
+cleanup() {
+  # Stop and remove any eval containers left behind (e.g. after a timeout
+  # kills the docker client but not the container).
+  if [[ "$USE_DOCKER" -eq 1 ]] && command -v docker >/dev/null 2>&1; then
+    local ids
+    ids="$(docker ps -aq --filter "name=eval_${TASK_NAME}_" 2>/dev/null || true)"
+    if [[ -n "$ids" ]]; then
+      docker rm -f $ids >/dev/null 2>&1 || true
+    fi
+  fi
   if [[ "$KEEP_WORKSPACES" -eq 1 ]]; then
     return
   fi
@@ -174,7 +189,7 @@ cleanup_workspaces() {
     fi
   done
 }
-trap cleanup_workspaces EXIT
+trap cleanup EXIT
 
 # ── One-time data provisioning ──────────────────────────────────────────────
 # If the task YAML declares a data_provision section (either econbench_benchmark
@@ -285,6 +300,7 @@ run_trial() {
     [[ -n "$MODEL" ]]      && helper_args+=(--model "$MODEL")
     [[ -n "$MAX_BUDGET" ]] && helper_args+=(--max-budget-usd "$MAX_BUDGET")
     "${timeout_cmd[@]+"${timeout_cmd[@]}"}" docker run --rm \
+      --name "eval_${TASK_NAME}_${trial_id}" \
       --network none \
       -v "$work_dir":/workspace \
       -v "$HOME/.claude":/home/trialuser/.claude:ro \
@@ -315,6 +331,10 @@ run_trial() {
   if [[ -n "$TIMEOUT_BIN" && "$exit_code" -eq 124 ]]; then
     timed_out=true
     echo "[$trial_id] WARNING: trial timed out after ${TRIAL_TIMEOUT}s."
+    # A timeout kills the docker client, not the container — stop it explicitly.
+    if [[ "$USE_DOCKER" -eq 1 ]]; then
+      docker rm -f "eval_${TASK_NAME}_${trial_id}" >/dev/null 2>&1 || true
+    fi
   fi
 
   echo "[$trial_id] Completed in ${elapsed}s (exit code: $exit_code)."
@@ -365,6 +385,7 @@ print(model)
   "run": $run_id,
   "elapsed_seconds": $elapsed,
   "exit_code": $exit_code,
+  "timed_out": $timed_out,
   "work_dir": "$work_dir",
   "sandboxed": $([[ "$USE_DOCKER" -eq 1 ]] && echo true || echo false),
   "workspace_kept": $([[ "$KEEP_WORKSPACES" -eq 1 ]] && echo true || echo false),

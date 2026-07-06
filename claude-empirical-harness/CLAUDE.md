@@ -47,3 +47,18 @@ figures/tables, follow it.
 Before finishing any analysis that wrote to `outputs/`, write
 `outputs/REPRODUCIBILITY.md` (seeds, package versions, data provenance,
 regeneration commands). A Stop hook enforces this.
+
+## Context-window continuity
+
+After each milestone, append a short entry to `scratch/session_log_YYYY-MM-DD.md`
+(today's date; fresh file per day). A milestone is any of:
+
+- Writing or updating a file in `outputs/`
+- Adding a fact to `outputs/FINDINGS.md`
+- Completing a user-requested task or phase
+- Hitting a dead end or changing approach
+
+Each entry: a `---` separator, a timestamp, then ≤5 bullet points covering
+what just happened, any surprises, and what's next. Reference file paths
+rather than re-explaining. Skip if the milestone is already fully captured
+in `FINDINGS.md` or commit messages.

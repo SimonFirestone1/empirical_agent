@@ -129,10 +129,7 @@ def provision_item(name: str, spec: dict[str, Any], data_dir: Path, force: bool)
             )
         print(f"  extracting to {item_dir}")
         with zipfile.ZipFile(archive_path) as zf:
-            try:
-                zf.extractall(item_dir, filter="data")
-            except TypeError:  # Python < 3.12 has no `filter` argument
-                zf.extractall(item_dir)
+            zf.extractall(item_dir, filter="data")
     else:
         shutil.copy2(archive_path, item_dir / filename)
 

@@ -9,7 +9,7 @@ description: >
 # One-time data provisioning. The runner provisions this once before all
 # trials, then symlinks the staged data into each trial workspace.
 data_provision:
-  econbench_benchmark: /Users/simonfirestone/econbench_framework/benchmarks/wallace/benchmark.yaml
+  econbench_benchmark: /Users/simonfirestone/empirical_agent/econbench_framework/benchmarks/wallace/benchmark.yaml
   workspace_link: data
 
 prompt: |
@@ -91,6 +91,60 @@ prompt: |
   - Uncertainty proxy
   - Option-value proxy
 
+  ## Variable definitions (from the original methods specification)
+
+  Construct the following variables per the original study's definitions.
+  External time-series inputs (90-day T-bill rates, FHFA/agency repeat-sales
+  house price indices, and a PPI residential construction cost index) are
+  staged in `data/external/` — use them; do not download alternatives.
+
+  - Dependent variable (Y): binary indicator equal to 1 if the household
+    undertook one or more major additions/renovations (new bedrooms,
+    bathrooms, kitchens, or other big-ticket, partially irreversible
+    projects) during the two years between survey waves, 0 otherwise.
+    Source variables differ by wave (e.g. NEWADD in 1985-1993; RAS/RAW-type
+    addition arrays with valid cost codes in 1995 and 1997); harmonize and
+    document the mapping.
+  - SPREAD: house return minus the user cost of capital, averaged over the
+    survey year and the prior year: SPREAD_{n,t} = (s_{n,t} + s_{n,t-1})/2,
+    where s_{n,t} = pi_{n,t} - rho_{n,t}.
+    - House return pi_{n,t}: annualized percent change in house value
+      (change in house value / lagged house value), using reported AHS
+      house values, interpolated for non-survey years with the MSA-level
+      repeat-sales house price index from `data/external/`.
+    - User cost rho_{n,t} = UPKEEP + (1 - (federal + state marginal tax
+      rate)) * (PTAX + r_t), where r_t is the annualized 90-day T-bill rate
+      from `data/external/`; UPKEEP = annual routine maintenance spending /
+      house value; PTAX = annual property taxes / house value. Marginal tax
+      rates are approximated from household income and filing status; if
+      tax schedules are unavailable, use a documented approximation.
+      Conceptually: after-tax cost of funds plus property tax and
+      depreciation/upkeep, net of expected capital gain.
+  - SPREAD VOL: volatility of SPREAD. Original definition: average absolute
+    deviation of the house's spread from its long-run (all-wave) average
+    spread, VOL_{n,t} = (|s_{n,t} - s_bar_n| + |s_{n,t-1} - s_bar_n|)/2. A
+    rolling standard deviation of SPREAD across time within MSA (or across
+    houses within MSA) is an acceptable documented alternative.
+  - COST: construction cost per square foot of additions. The original
+    study used proprietary state-level cost-per-square-foot indices; here,
+    proxy with the PPI residential construction cost index in
+    `data/external/`, documented as an approximation.
+  - COST VOL: volatility of COST, defined analogously to SPREAD VOL (e.g.
+    average absolute deviation from the long-run mean, or a rolling
+    standard deviation of construction-cost changes).
+  - RECMOVER: dummy equal to 1 if the household moved into the unit
+    recently (respondent moved in within the last 12 months per the
+    wave-specific mover variables; a within-last-2-years definition is
+    acceptable if documented). Wave-specific sources (e.g. RMR in 1985-95;
+    move-year/month variables in 1997) should be harmonized.
+  - PER: number of persons in the household.
+  - INC / INCOME: household income in thousands of dollars.
+  - AGE: age of the structure in years = survey year minus year built.
+  - Sample-selection variables: units-in-structure (single family
+    detached), interview status (occupied regular interview), and tenure
+    (owner-occupied); plus MSA/geographic identifier for merging external
+    indices.
+
   ## Recommended econometric structure
 
   Estimate discrete-choice models where the dependent variable is the
@@ -136,154 +190,6 @@ prompt_naturalistic: |
   can be modeled as a real-options investment-timing decision. Save all
   deliverables to `outputs/`.
 
-# ── Scoring rubric ───────────────────────────────────────────────────────────
-# Mirrors benchmarks/wallace/benchmark.yaml in econbench_framework, translated
-# into this harness's auto/judge criteria schema.
-
-criteria:
-  # ── Required deliverables ───────────────────────────────────────────────
-  - id: A1
-    category: Deliverables
-    description: All 7 required files present in outputs/
-    mode: auto
-    check: file_exists
-    path: replication_plan.md
-    min_words: 20
-
-  - id: A2
-    category: Deliverables
-    description: variable_crosswalk.csv present and non-trivial
-    mode: auto
-    check: file_exists
-    path: variable_crosswalk.csv
-    min_words: 10
-
-  - id: A3
-    category: Deliverables
-    description: regression_tables.csv present and non-trivial
-    mode: auto
-    check: file_exists
-    path: regression_tables.csv
-    min_words: 10
-
-  # ── Sample construction ─────────────────────────────────────────────────
-  - id: B1
-    category: Sample Construction
-    description: Sample restrictions applied (owner-occ, single-family, complete interview)
-    mode: judge
-    judge_prompt: >
-      Does the sample construction restrict to owner-occupied units,
-      single-family detached homes, and regular completed interviews (or
-      clearly documented equivalents), with a row-count log across all 7
-      waves (1985,1987,1989,1991,1993,1995,1997)? Score on a 0/1/2 scale:
-      0 = restrictions ignored/absent; 1 = restrictions mentioned but
-      incomplete or incorrect (missing one of the three restrictions, or
-      missing waves in the log); 2 = all three restrictions correctly
-      applied with a complete row-count log across all 7 waves.
-
-  - id: B2
-    category: Sample Construction
-    description: Renovation indicator correctly harmonized across wave-specific codes
-    mode: judge
-    judge_prompt: >
-      Does the analysis correctly identify that different AHS waves use
-      different source variables/codes for the renovation indicator (e.g.
-      NEWADD in earlier waves vs RAN in 1997), and explicitly document the
-      harmonization? Score on a 0/1/2 scale: 0 = coding differences ignored
-      (all waves treated identically with no acknowledgment); 1 = coding
-      differences mentioned but harmonization incomplete or incorrect;
-      2 = coding differences correctly identified and harmonization
-      explicitly documented.
-
-  # ── Variable construction ───────────────────────────────────────────────
-  - id: C1
-    category: Variable Construction
-    description: Uncertainty proxy is theoretically justified and reflects housing-market volatility
-    mode: judge
-    judge_prompt: >
-      Is there a real, computed uncertainty proxy tied to house-price
-      volatility/dispersion (e.g., metro-by-wave dispersion of log house
-      values, or an externally merged price index), not a placeholder or
-      unrelated variable? FAIL if the "uncertainty" variable is not
-      economically connected to price/market volatility.
-
-  - id: C2
-    category: Variable Construction
-    description: Option-value proxy interacts uncertainty with a value/incentive measure
-    mode: judge
-    judge_prompt: >
-      Is there an option-value proxy constructed from the uncertainty
-      measure (e.g., uncertainty x house value, or uncertainty x income),
-      with a stated theoretical rationale connecting it to the real-options
-      framework? A proxy with no interaction/theoretical link = FAIL.
-
-  - id: C3
-    category: Variable Construction
-    description: Missing/hard-to-construct variables (recent_mover, listed_for_sale, maintenance) are handled honestly
-    mode: judge
-    judge_prompt: >
-      For variables not directly available in the AHS PUF (recent mover,
-      listed for sale, maintenance expenditure), does the submission
-      explicitly document them as missing/approximated in limitations
-      rather than fabricating values or silently omitting mention of them?
-      Score on a 0/1/2 scale: 0 = missing variables silently omitted or
-      fabricated without disclosure; 1 = mentioned but documentation
-      incomplete or partially inaccurate; 2 = missing/approximated
-      variables honestly and explicitly documented.
-
-  # ── Econometrics ────────────────────────────────────────────────────────
-  - id: D1
-    category: Econometrics
-    description: Model progression follows the 5-step structure (baseline -> geo/wave -> uncertainty -> option value -> robustness)
-    mode: judge
-    judge_prompt: >
-      Does regression_tables.csv / analysis code show a progression of at
-      least: (1) baseline household+property controls, (2) + geography/wave
-      controls, (3) + uncertainty proxy, (4) + option-value proxy, (5) a
-      robustness check with an alternative specification? Missing 2 or more
-      of these steps = FAIL.
-
-  - id: D2
-    category: Econometrics
-    description: Higher uncertainty predicted to reduce renovation probability, and result interpreted against real-options theory
-    mode: judge
-    judge_prompt: >
-      Does the replication memo interpret the sign/magnitude of the
-      uncertainty and option-value coefficients explicitly in terms of the
-      real-options prediction (higher uncertainty -> higher threshold ->
-      lower renovation probability), rather than just reporting numbers
-      with no theoretical interpretation? Score on a 0/1/2 scale: 0 = no
-      theoretical interpretation at all; 1 = interpretation attempted but
-      incomplete or incorrect; 2 = signs/magnitudes correctly and
-      substantively interpreted against the real-options prediction.
-
-  # ── Reproducibility / integrity ─────────────────────────────────────────
-  - id: E1
-    category: Reproducibility
-    description: No fabricated numbers — regression stats trace to executed code
-    mode: judge
-    judge_prompt: >
-      Do the coefficients/statistics reported in regression_tables.csv and
-      replication_memo.md appear to trace to code that was actually executed
-      in this session (not invented or copied from memory of the original
-      paper)? FAIL if there's evidence of fabrication or unexecuted code.
-
-  - id: E2
-    category: Reproducibility
-    description: Did not reference/use the original paper's actual results
-    mode: judge
-    judge_prompt: >
-      Does the submission avoid citing or reproducing the original Wallace
-      paper's actual coefficient estimates, standard errors, p-values, or
-      conclusions (per the restriction in the prompt)? Citing specific
-      numbers attributable to the original paper = FAIL.
-
-  - id: E3
-    category: Reproducibility
-    description: limitations.md substantively discusses approximations/ambiguity
-    mode: auto
-    check: file_exists
-    path: limitations.md
-    min_words: 30
-
-discriminators: [B1, B2, C1, C2, C3, D1, D2, E1]
+# Scoring rubric lives in wallace_real_options_rubric.yaml (separate file
+# to prevent leakage to the agent under evaluation).
+rubric: wallace_real_options_rubric.yaml

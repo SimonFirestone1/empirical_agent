@@ -36,6 +36,12 @@ BOOTSTRAP_N = 10_000
 def load_task(task_path: Path) -> dict:
     with open(task_path) as f:
         task = yaml.safe_load(f)
+    if "rubric" in task and "criteria" not in task:
+        rubric_path = task_path.parent / task["rubric"]
+        with open(rubric_path) as f:
+            rubric = yaml.safe_load(f)
+        task["criteria"] = rubric.get("criteria", [])
+        task.setdefault("discriminators", rubric.get("discriminators", []))
     validate_task(task)
     return task
 
@@ -813,7 +819,7 @@ def main():
     if args.results_dir:
         results_dir = Path(args.results_dir)
     else:
-        results_dir = Path("evals/results") / task_name
+        results_dir = Path(__file__).resolve().parent / "results" / task_name
 
     if not results_dir.exists():
         print(f"No results at {results_dir}. Run evals/run_eval.sh --task {task_path} first.")
@@ -832,13 +838,17 @@ def main():
     scorable_dirs = []
     for td in trial_dirs:
         meta_path = td / "meta.json"
-        exit_code = 0
-        if meta_path.exists():
-            try:
-                meta = json.loads(meta_path.read_text())
-                exit_code = int(meta.get("exit_code", 0))
-            except (json.JSONDecodeError, TypeError, ValueError):
-                exit_code = 0
+        if not meta_path.exists():
+            print(f"  {td.name}: WARNING — missing meta.json; excluded from scoring")
+            excluded[td.name] = -1
+            continue
+        try:
+            meta = json.loads(meta_path.read_text())
+            exit_code = int(meta.get("exit_code", 0))
+        except (json.JSONDecodeError, TypeError, ValueError):
+            print(f"  {td.name}: WARNING — corrupt meta.json; excluded from scoring")
+            excluded[td.name] = -1
+            continue
         if exit_code != 0:
             excluded[td.name] = exit_code
         else:

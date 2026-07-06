@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # PreToolUse hook -- warn (non-blocking) when a pandas merge is written without
 # an explicit validate= cardinality contract. Registered for Write|Edit|NotebookEdit.
-# Exit 2 => stderr is fed back to the agent (exit 1 would be swallowed). Exit 0 => allow.
+# Always exits 0 so the tool call is never blocked; the warning is printed to
+# stderr for visibility only.
 # Polars/SQL joins are legitimate and not matched here.
 import sys
 import json
@@ -27,8 +28,12 @@ if fp.endswith("safe_merge.py") or re.search(
 ):
     sys.exit(0)
 
-# pandas merges: pd.merge(...) / pandas.merge(...) / df.merge(...)
-has_merge = re.search(r"(?:pd|pandas)\.merge\s*\(|\.merge\s*\(", payload)
+# pandas merges: pd.merge(...) / pandas.merge(...) / df.merge(...).
+# Require an identifier before ".merge(" so Polars .merge_sorted() etc. and
+# module-level chained calls don't false-positive; pd./pandas. handled explicitly.
+has_merge = re.search(
+    r"(?:pd|pandas)\.merge\s*\(|\b[A-Za-z_]\w*\s*\.\s*merge\s*\(", payload
+)
 if has_merge and not re.search(r"validate\s*=", payload):
     sys.stderr.write(
         "WARNING: pandas merge without an explicit validate= contract. Use "
@@ -36,7 +41,7 @@ if has_merge and not re.search(r"validate\s*=", payload):
         "validate='1:1'|'1:m'|'m:1'|'m:m') so an unexpected cardinality raises "
         "instead of silently fanning out rows or being deduplicated away.\n"
     )
-    # Exit 2 so Claude Code surfaces stderr to the agent (exit 1 is not fed back).
-    sys.exit(2)
+    # Exit 0: warn only, never block the tool call (exit 2 would block it).
+    sys.exit(0)
 
 sys.exit(0)

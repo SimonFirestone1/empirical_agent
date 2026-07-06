@@ -171,14 +171,46 @@ def score_expected_values(
     }
 
 
+def tier_score(
+    tolerance_tiers: dict[str, Any],
+    rows: pd.DataFrame,
+    quality_col: str,
+) -> tuple[float | None, list[str]]:
+    """Score a variable's rows against graded tolerance tiers.
+
+    Returns (score, unrecognized_tiers). score is None when tier-based
+    scoring cannot be applied (no tiers configured, column missing, or no
+    recognized tier values) — callers should fall back to binary scoring.
+
+    When multiple rows carry recognized tiers, the minimum tier score
+    governs (the worst-quality row determines credit, anti-gaming).
+    """
+    if not tolerance_tiers or quality_col not in rows.columns:
+        return None, []
+
+    tier_lookup = {
+        normalize_name(name): float(cfg.get("score", 0.0)) if isinstance(cfg, dict) else float(cfg)
+        for name, cfg in tolerance_tiers.items()
+    }
+
+    recognized: list[float] = []
+    unrecognized: list[str] = []
+    for value in rows[quality_col].dropna():
+        norm = normalize_name(value)
+        if norm in tier_lookup:
+            recognized.append(tier_lookup[norm])
+        else:
+            unrecognized.append(str(value))
+
+    if not recognized:
+        return None, unrecognized
+    return min(recognized), unrecognized
+
+
 def score_variable_crosswalk(
     submission_dir: Path,
     benchmark: dict[str, Any],
 ) -> dict[str, Any]:
-    # NOTE (H3): a top-level `tolerances:` key may appear in benchmark.yaml,
-    # but tolerance-based scoring is NOT yet implemented. The scorer
-    # intentionally ignores that key for now; it is dead config until a
-    # tolerance-scoring component is added.
     spec = benchmark.get("crosswalk_file", {})
     filename = spec.get("filename", "variable_crosswalk.csv")
     path = submission_dir / filename
@@ -208,6 +240,17 @@ def score_variable_crosswalk(
     final_variable_col = normalized_cols.get(normalize_name(final_variable_col), final_variable_col)
     source_variable_col = normalized_cols.get(normalize_name(source_variable_col), source_variable_col)
     transformation_col = normalized_cols.get(normalize_name(transformation_col), transformation_col)
+
+    # Graded tolerance tiers (top-level `tolerances:` in benchmark.yaml).
+    # When present and the submission includes quality-tier columns, tier
+    # scores replace binary source/transformation matching.
+    tolerances = benchmark.get("tolerances", {}) or {}
+    source_quality_col = spec.get("source_quality_column", "source_quality")
+    transformation_quality_col = spec.get("transformation_quality_column", "transformation_quality")
+    source_quality_col = normalized_cols.get(normalize_name(source_quality_col), source_quality_col)
+    transformation_quality_col = normalized_cols.get(
+        normalize_name(transformation_quality_col), transformation_quality_col
+    )
 
     if final_variable_col not in df.columns:
         variable_coverage_score = 0.0
@@ -285,10 +328,29 @@ def score_variable_crosswalk(
             source_score = 1.0 if source_match is True else 0.0
             transformation_score = 1.0 if transformation_match is True else 0.0
 
+            # Graded tier scoring overrides binary matching when the
+            # benchmark defines `tolerances:` and the submission declares a
+            # recognized quality tier for this variable. If the tier column
+            # is absent or its values are unrecognized, binary scoring
+            # applies (backward compatible).
+            source_tier_score, source_unrecognized = tier_score(
+                tolerances.get("variable_mapping", {}), rows, source_quality_col
+            )
+            transformation_tier_score, transformation_unrecognized = tier_score(
+                tolerances.get("transformation", {}), rows, transformation_quality_col
+            )
+            if source_tier_score is not None:
+                source_score = source_tier_score
+            if transformation_tier_score is not None:
+                transformation_score = transformation_tier_score
+
             variable_details[var_name] = {
                 "coverage": 1.0,
                 "source_match": source_match,
                 "transformation_match": transformation_match,
+                "source_tier_score": source_tier_score,
+                "transformation_tier_score": transformation_tier_score,
+                "unrecognized_tiers": sorted(set(source_unrecognized + transformation_unrecognized)),
                 "score": 0.5 + 0.25 * source_score + 0.25 * transformation_score,
             }
 
@@ -307,12 +369,13 @@ def score_variable_crosswalk(
         },
     )
 
-    total = (
+    weight_total = sum(weights.values())
+    total = 0.0 if weight_total == 0 else (
         weights.get("columns", 0) * column_score["score"]
         + weights.get("expected_values", 0) * expected_values_score["score"]
         + weights.get("variable_coverage", 0) * variable_coverage_score
         + weights.get("mapping_quality", 0) * mapping_quality_score
-    )
+    ) / weight_total
 
     return {
         "score": float(total),
@@ -451,7 +514,115 @@ def score_text_artifact(
     }
 
 
-def score_submission(submission_dir: str | Path, benchmark_path: str | Path) -> dict[str, Any]:
+def score_coefficients(
+    submission_dir: Path,
+    ground_truth: dict[str, Any],
+) -> dict[str, Any]:
+    """Score regression coefficients against judge-only ground truth.
+
+    Ground truth lives in a separate YAML (never shown to agents) with
+    structure: coefficients -> model -> variable -> {expected, atol, rtol,
+    weight}. A coefficient passes if
+    |observed - expected| <= max(atol, rtol * |expected|).
+    Score is the weighted fraction of coefficients within tolerance.
+    """
+    spec = ground_truth.get("coefficients", {}) or {}
+    filename = ground_truth.get("filename", "regression_tables.csv")
+    path = submission_dir / filename
+    df, read_error = safe_read_csv(path)
+
+    if df is None:
+        return {"score": 0.0, "error": f"{filename} missing or unreadable ({read_error})"}
+
+    normalized_cols = {normalize_name(c): c for c in df.columns}
+    model_col = normalized_cols.get("model")
+    variable_col = normalized_cols.get("variable")
+    coefficient_col = normalized_cols.get("coefficient")
+
+    missing_cols = [
+        name for name, col in
+        [("model", model_col), ("variable", variable_col), ("coefficient", coefficient_col)]
+        if col is None
+    ]
+    if missing_cols:
+        return {"score": 0.0, "error": f"{filename} missing required columns: {missing_cols}"}
+
+    details: dict[str, dict[str, Any]] = {}
+    total_weight = 0.0
+    passed_weight = 0.0
+
+    model_norm = df[model_col].map(normalize_name)
+    variable_norm = df[variable_col].map(normalize_name)
+
+    for model_name, variables in spec.items():
+        for var_name, coef_spec in (variables or {}).items():
+            key = f"{model_name}.{var_name}"
+            expected = float(coef_spec["expected"])
+            atol = float(coef_spec.get("atol", 0.0))
+            rtol = float(coef_spec.get("rtol", 0.0))
+            weight = float(coef_spec.get("weight", 1.0))
+            tolerance = max(atol, rtol * abs(expected))
+            total_weight += weight
+
+            rows = df[
+                (model_norm == normalize_name(model_name))
+                & (variable_norm == normalize_name(var_name))
+            ]
+            if rows.empty:
+                details[key] = {
+                    "expected": expected,
+                    "observed": None,
+                    "tolerance": tolerance,
+                    "distance": None,
+                    "passed": False,
+                    "error": "no matching (model, variable) row",
+                }
+                continue
+
+            observed_raw = rows.iloc[0][coefficient_col]
+            try:
+                observed = float(observed_raw)
+            except (TypeError, ValueError):
+                details[key] = {
+                    "expected": expected,
+                    "observed": str(observed_raw),
+                    "tolerance": tolerance,
+                    "distance": None,
+                    "passed": False,
+                    "error": "coefficient is not numeric",
+                }
+                continue
+
+            distance = abs(observed - expected)
+            passed = distance <= tolerance
+            if passed:
+                passed_weight += weight
+
+            details[key] = {
+                "expected": expected,
+                "observed": observed,
+                "tolerance": tolerance,
+                "distance": distance,
+                "passed": passed,
+            }
+            if len(rows) > 1:
+                details[key]["warning"] = (
+                    f"{len(rows)} rows matched (model, variable); used the first"
+                )
+
+    return {
+        "score": passed_weight / total_weight if total_weight else 1.0,
+        "n_coefficients": len(details),
+        "n_passed": sum(1 for d in details.values() if d["passed"]),
+        "coefficient_details": details,
+    }
+
+
+def score_submission(
+    submission_dir: str | Path,
+    benchmark_path: str | Path,
+    ground_truth_path: str | Path | None = None,
+) -> dict[str, Any]:
     submission_dir = Path(submission_dir)
     benchmark = load_yaml(benchmark_path)
 
@@ -470,6 +641,10 @@ def score_submission(submission_dir: str | Path, benchmark_path: str | Path) -> 
 
     for name, artifact_spec in benchmark.get("text_artifacts", {}).items():
         component_scores[name] = score_text_artifact(submission_dir, artifact_spec)
+
+    if ground_truth_path is not None:
+        ground_truth = load_yaml(ground_truth_path)
+        component_scores["coefficient_accuracy"] = score_coefficients(submission_dir, ground_truth)
 
     weights = benchmark.get("scoring_weights", {})
     if not weights:
@@ -502,10 +677,15 @@ def main() -> None:
     parser.add_argument("--benchmark", required=True, help="Path to benchmark YAML.")
     parser.add_argument("--submission", required=True, help="Path to submission directory.")
     parser.add_argument("--output", required=False, help="Optional JSON output path.")
+    parser.add_argument(
+        "--ground-truth",
+        required=False,
+        help="Path to judge-only ground-truth YAML with expected coefficients.",
+    )
 
     args = parser.parse_args()
 
-    result = score_submission(args.submission, args.benchmark)
+    result = score_submission(args.submission, args.benchmark, ground_truth_path=args.ground_truth)
 
     if args.output:
         output_path = Path(args.output)
